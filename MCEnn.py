@@ -175,31 +175,37 @@ class MCE_FF(torch.nn.Module):
         return accuracy
 
 
-file_info = find_optimal_params([2, 3, 5, 7, 9], [10, 25, 50, 75, 100], [.01, .02, .03, .04, .05, .06, .07, .08, .09, .1], [("xor_train.csv", "xor_valid.csv")])
-testing.make_best_param_graph(file_info, "XOR Valid Data")
-print(max(file_info, key=file_info.get))
+# file_info = find_optimal_params([2, 3, 5, 7, 9], [10, 25, 50, 75, 100], [.01, .02, .03, .04, .05, .06, .07, .08, .09, .1], [("spiral_train.csv", "spiral_valid.csv")])
+# testing.make_best_param_graph(file_info, "Spiral Valid Data")
+# print(max(file_info, key=file_info.get))
 
+# for i in range(0, 10):
+#     next_best = max(file_info, key=file_info.get)
+#     value = file_info[next_best]
+
+#     print(f"{i + 1}: {next_best} Accuracy -> {value * 100}%")
+#     del file_info[next_best]
 
 # (5, 75, .03)
 
-#
+# #
 # for file in file_info:
 #     testing.make_best_param_graph(file_info[file], file)
 
 # file_name = list(file_info.keys())[0]
 # best_params = file_info[file_name][0]
-#
+
 # print(best_params)
-#
-# model = make_MCE_FF(k=best_params[0], epoch=best_params[1], learning_rate=best_params[2], file_name=file_name)
-#
-#
-# cur_train_data = pd.read_csv("xor_test.csv")
-# labels = cur_train_data.iloc[:, 0]
-# features = cur_train_data.iloc[:, 1:]
-#
-# features = features.to_numpy()
-# labels = labels.to_numpy()
-#
-# graph.plot_decision_regions(features, labels, model, axis=None, title="Test")
-# graph.plt.show()
+
+model = make_MCE_FF(k=7, epoch=100, learning_rate=.04, file_name="xor_train.csv")
+
+
+cur_train_data = pd.read_csv("xor_test.csv")
+labels = cur_train_data.iloc[:, 0]
+features = cur_train_data.iloc[:, 1:]
+
+features = features.to_numpy()
+labels = labels.to_numpy()
+
+graph.plot_decision_regions(features, labels, model, axis=None, title="Test")
+graph.plt.show()
