@@ -1,4 +1,3 @@
-
 import torch
 from torch import nn
 import pandas as pd
@@ -7,10 +6,11 @@ import pandas as pd
 import numpy as np
 import testing
 
+
 def find_optimal_params(k_list, epoch_list, learning_list, data_file_list):
     file_to_params = {}
     all_results = {}
-    for file in data_file_list:
+    for train_data, valid_data in data_file_list:
 
         k_epoch_learning = {}
         for k in k_list:
@@ -18,9 +18,14 @@ def find_optimal_params(k_list, epoch_list, learning_list, data_file_list):
                 for rate in learning_list:
                     k_epoch_learning[(k, epoch, rate)] = None
 
-        cur_train_data = pd.read_csv(file)
+        cur_train_data = pd.read_csv(train_data)
         labels = cur_train_data.iloc[:, 0]
         features = cur_train_data.iloc[:, 1:]
+
+        valid_data = pd.read_csv(valid_data)
+        valid_labels = valid_data.iloc[:, 0].to_numpy()
+        valid_feautres = valid_data.iloc[:, 1:].to_numpy()
+
 
         # Convert to PyTorch tensors
         labels_tensor = torch.tensor(labels.to_numpy(), dtype=torch.long)
@@ -59,16 +64,18 @@ def find_optimal_params(k_list, epoch_list, learning_list, data_file_list):
 
                             total_loss += loss.item()
                         if (rising_epoch == epoch - 1):
-                            k_epoch_learning[(k, epoch, rate)] = total_loss / len(train_tensor)
+                            # k_epoch_learning[(k, epoch, rate)] = total_loss / len(train_tensor)
+                            all_results[(k, epoch, rate)] = model.calculate_accuracy(valid_feautres, valid_labels)
                             print(
-                                f"(k={k}, epoch={epoch}, learning_rate={rate}) -> Final loss: {total_loss / len(train_tensor)}\n")
+                                f"(k={k}, epoch={epoch}, learning_rate={rate}) -> Accuracy: {total_loss / len(train_tensor)}\n")
 
         # best_parameters = min(k_epoch_learning, key=k_epoch_learning.get)
         # file_to_params[file] = (best_parameters, min(k_epoch_learning.values()))
-        all_results[file] = k_epoch_learning
+        # all_results[file] = k_epoch_learning
     return all_results
 
-def make_MCE_FF(k, learning_rate, epoch, file_name):
+
+def make_MCE_FF(k, epoch, learning_rate, file_name):
     cur_train_data = pd.read_csv(file_name)
     labels = cur_train_data.iloc[:, 0]
     features = cur_train_data.iloc[:, 1:]
@@ -108,6 +115,7 @@ def make_MCE_FF(k, learning_rate, epoch, file_name):
 
     return model
 
+
 class MCE_FF(torch.nn.Module):
 
     def __init__(self, k):
@@ -141,11 +149,42 @@ class MCE_FF(torch.nn.Module):
         # Return as NumPy array for compatibility with plotting
         return predicted_class.detach().cpu().numpy()
 
-# file_info = find_optimal_params([2, 3, 5, 7, 9], [10, 25, 50, 75, 100], [.01, .02, .03, .04, .05, .06, .07, .08, .09, .1], ["xor_train.csv", "spiral_train.csv"])
-file_info = find_optimal_params([7, 9], [75, 100], [.09, .1], ["xor_train.csv", "spiral_train.csv"])
+    def calculate_accuracy(self, features, labels):
+        """
+        Calculates the accuracy of the model given features and true labels.
 
-for file in file_info:
-    testing.make_best_param_graph(file_info[file], file)
+        Args:
+            features: Input features (NumPy array or PyTorch tensor).
+            labels: True labels (NumPy array or PyTorch tensor).
+
+        Returns:
+            accuracy (float): The accuracy as a value between 0 and 1.
+        """
+        # Get predictions
+        predictions = self.predict(features)
+
+        # Ensure labels are NumPy arrays for comparison
+        if isinstance(labels, torch.Tensor):
+            labels = labels.detach().cpu().numpy()
+
+        # Calculate accuracy
+        correct = (predictions == labels).sum()
+        total = len(labels)
+        accuracy = correct / total
+
+        return accuracy
+
+
+file_info = find_optimal_params([2, 3, 5, 7, 9], [10, 25, 50, 75, 100], [.01, .02, .03, .04, .05, .06, .07, .08, .09, .1], [("xor_train.csv", "xor_valid.csv")])
+testing.make_best_param_graph(file_info, "XOR Valid Data")
+print(max(file_info, key=file_info.get))
+
+
+# (5, 75, .03)
+
+#
+# for file in file_info:
+#     testing.make_best_param_graph(file_info[file], file)
 
 # file_name = list(file_info.keys())[0]
 # best_params = file_info[file_name][0]
