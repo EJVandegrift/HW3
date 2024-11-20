@@ -232,3 +232,8 @@ print(nn.test_model("xor_test.csv"))
 
 
 
+
+
+
+
+
