@@ -2,7 +2,8 @@ import numpy as np
 import random
 import math
 import graph
-
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 def MCCE_Loss(true_label, predictions, num_dif_labels=2):
     '''
@@ -159,4 +160,13 @@ all_observations = data[:, 1:]
 all_observations = np.array([obs.reshape(2, 1) for obs in all_observations])
 
 
+# Create a figure and plot the decision regions
+plt.figure(figsize=(12, 5))
+
+# Plot decision boundary
+plt.subplot(1, 2, 1)
+
 graph.plot_decision_regions(all_observations, all_labels, nn)
+# Display the plots
+plt.tight_layout()
+plt.show()
